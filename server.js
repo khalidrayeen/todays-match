@@ -40,6 +40,8 @@ function broadcast(data) {
   });
 }
 
-server.listen(6001, function () {
-  console.log('WebSocket server started on port 6001 http://localhost:6001/admin.html');
+// ✅ Use Glitch's provided PORT
+const PORT = process.env.PORT || 6001;
+server.listen(PORT, function () {
+  console.log(`Server running at http://localhost:${PORT}/admin.html`);
 });
