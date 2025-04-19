@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BGMI Group Admin</title>
+  <style>
+    body {
+      background: #071e28;
+      color: white;
+      font-family: sans-serif;
+      padding: 20px;
+    }
+    .group-section {
+      margin-bottom: 20px;
+      border: 1px solid #2e5368;
+      padding: 15px;
+      border-radius: 12px;
+    }
+    .team-input {
+      display: flex;
+      gap: 10px;
+      margin: 10px 0;
+    }
+    .team-input input {
+      flex: 1;
+      padding: 8px;
+      border-radius: 8px;
+      border: none;
+    }
+    button {
+      padding: 10px 20px;
+      background: #11a366;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    input[type=number] {
+      width: 60px;
+      padding: 5px;
+      margin-right: 10px;
+    }
+    textarea {
+      width: 100%;
+      margin: 10px 0;
+      padding: 8px;
+      border-radius: 8px;
+      border: none;
+      font-family: sans-serif;
+      resize: vertical;
+    }
+  </style>
+</head>
+<body>
+  <h2>Setup Groups</h2>
+  <div>
+    Groups: <input type="number" id="numGroups" min="1">
+    Teams/Group: <input type="number" id="teamsPerGroup" min="1">
+    <button onclick="generateInputs()">Generate</button>
+  </div>
+  <div style="margin-top: 10px;">
+    Background Image URL: <input type="text" id="bgUrl" placeholder="https://example.com/bg.jpg" style="width: 300px; padding: 5px; border-radius: 6px;">
+  </div>
+  <form id="form"></form>
+  <button onclick="startStream()">Trigger Animation</button>
+
+  <script>
+    const socket = new WebSocket('ws://localhost:6001');
+
+    function generateInputs() {
+      const form = document.getElementById('form');
+      form.innerHTML = '';
+
+      const numGroups = parseInt(document.getElementById('numGroups').value);
+      const teamsPerGroup = parseInt(document.getElementById('teamsPerGroup').value);
+
+      for (let g = 0; g < numGroups; g++) {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'group-section';
+        groupDiv.innerHTML = `<h3>Group ${String.fromCharCode(65 + g)}</h3>`;
+
+        // Paste area and button
+        const pasteArea = document.createElement('textarea');
+        pasteArea.placeholder = 'Paste team names + logo URLs (e.g. TeamName [tab/space] https://...)';
+        pasteArea.rows = teamsPerGroup + 2;
+        groupDiv.appendChild(pasteArea);
+
+        const pasteBtn = document.createElement('button');
+        pasteBtn.type = 'button';
+        pasteBtn.textContent = 'Paste Teams + Logos';
+        pasteBtn.style = 'margin-bottom: 15px;';
+        groupDiv.appendChild(pasteBtn);
+
+        const teamInputs = [];
+
+        for (let t = 0; t < teamsPerGroup; t++) {
+          const teamDiv = document.createElement('div');
+          teamDiv.className = 'team-input';
+
+          const name = document.createElement('input');
+          name.placeholder = 'Team Name';
+          name.name = `group${g}-name-${t}`;
+
+          const logo = document.createElement('input');
+          logo.placeholder = 'Team Logo URL';
+          logo.name = `group${g}-logo-${t}`;
+
+          teamDiv.appendChild(name);
+          teamDiv.appendChild(logo);
+          groupDiv.appendChild(teamDiv);
+
+          teamInputs.push({ name, logo });
+        }
+
+        pasteBtn.onclick = () => {
+          const lines = pasteArea.value.trim().split('\n');
+          for (let i = 0; i < teamsPerGroup && i < lines.length; i++) {
+            const parts = lines[i].trim().split(/\s+/); // split by any space or tab
+            const teamName = parts[0];
+            const logoUrl = parts[1] || '';
+            teamInputs[i].name.value = teamName;
+            teamInputs[i].logo.value = logoUrl;
+          }
+        };
+
+        form.appendChild(groupDiv);
+      }
+    }
+
+    function startStream() {
+      const numGroups = parseInt(document.getElementById('numGroups').value);
+      const teamsPerGroup = parseInt(document.getElementById('teamsPerGroup').value);
+      const bgUrl = document.getElementById('bgUrl').value;
+      const groups = [];
+
+      for (let g = 0; g < numGroups; g++) {
+        const group = [];
+        for (let t = 0; t < teamsPerGroup; t++) {
+          const name = document.querySelector(`[name=group${g}-name-${t}]`).value;
+          const logo = document.querySelector(`[name=group${g}-logo-${t}]`).value;
+          group.push({ name, logo });
+        }
+        groups.push(group);
+      }
+
+      socket.send(JSON.stringify({ type: 'start', data: groups, bgUrl }));
+    }
+  </script>
+</body>
+</html>

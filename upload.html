@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Imgur Upload Test</title>
+</head>
+<body style="text-align:center; padding:40px;">
+  <h2>Test Imgur Upload</h2>
+  <input type="file" id="imageInput"><br><br>
+  <button onclick="uploadImage()">Upload to Imgur</button>
+  <div id="result"></div>
+
+  <script>
+    function uploadImage() {
+      const file = document.getElementById('imageInput').files[0];
+      if (!file) {
+        alert("Select a file first.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("image", file);
+
+      fetch("https://api.imgur.com/3/image", {
+        method: "POST",
+        headers: {
+          Authorization: "Client-ID 3b1070a0ec33d4e",
+        },
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          document.getElementById("result").innerHTML = `
+            <p>Uploaded!</p>
+            <img src="${data.data.link}" width="200"><br>
+            <code>${data.data.link}</code>
+          `;
+        } else {
+          console.log(data);
+          alert("Upload failed. Check console for error.");
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Error occurred. Check console.");
+      });
+    }
+  </script>
+</body>
+</html>

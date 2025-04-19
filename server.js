@@ -1,0 +1,45 @@
+const express = require('express');
+const http = require('http');
+const WebSocket = require('ws');
+const path = require('path');
+
+const app = express();
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+
+// Serve static files from the current directory
+app.use(express.static(path.join(__dirname)));
+
+// WebSocket handling
+let groupsData = [];
+let backgroundUrl = '';
+
+wss.on('connection', function connection(ws) {
+  ws.on('message', function incoming(message) {
+    const parsed = JSON.parse(message);
+
+    if (parsed.type === 'start') {
+      groupsData = parsed.data;
+      backgroundUrl = parsed.bgUrl || '';
+
+      // Broadcast to all connected viewers
+      broadcast(JSON.stringify({
+        type: 'start',
+        data: groupsData,
+        bgUrl: backgroundUrl
+      }));
+    }
+  });
+});
+
+function broadcast(data) {
+  wss.clients.forEach(function each(client) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(data);
+    }
+  });
+}
+
+server.listen(6001, function () {
+  console.log('WebSocket server started on port 6001 http://localhost:6001/admin.html');
+});
