@@ -62,15 +62,15 @@
   <div style="margin-top: 10px;">
     Background Image URL: <input type="text" id="bgUrl" placeholder="https://example.com/bg.jpg" style="width: 300px; padding: 5px; border-radius: 6px;">
   </div>
+  <div style="margin-top: 10px;">
+    Round Name: <input type="text" id="roundName" placeholder="e.g., Round 1" style="width: 200px; padding: 5px; border-radius: 6px;">
+  </div>
+  
   <form id="form"></form>
   <button onclick="startStream()">Trigger Animation</button>
 
   <script>
-    const socket = new WebSocket(
-      location.protocol === 'https:' 
-        ? 'wss://' + location.host 
-        : 'ws://' + location.host
-    );
+    const socket = new WebSocket('ws://localhost:6001'); // Update to wss or full URL if hosted
 
     function generateInputs() {
       const form = document.getElementById('form');
@@ -85,7 +85,7 @@
         groupDiv.innerHTML = `<h3>Group ${String.fromCharCode(65 + g)}</h3>`;
 
         const pasteArea = document.createElement('textarea');
-        pasteArea.placeholder = 'Paste team names + logo URLs (e.g. TeamName [tab/space] https://...)';
+        pasteArea.placeholder = 'Paste team names + logo URLs (e.g. Team Name [tab or space] https://...)';
         pasteArea.rows = teamsPerGroup + 2;
         groupDiv.appendChild(pasteArea);
 
@@ -119,9 +119,26 @@
         pasteBtn.onclick = () => {
           const lines = pasteArea.value.trim().split('\n');
           for (let i = 0; i < teamsPerGroup && i < lines.length; i++) {
-            const parts = lines[i].trim().split(/\s+/);
-            const teamName = parts[0];
-            const logoUrl = parts[1] || '';
+            const line = lines[i].trim();
+
+            let teamName = '';
+            let logoUrl = '';
+
+            if (line.includes('\t')) {
+              const [name, url] = line.split('\t');
+              teamName = name.trim();
+              logoUrl = url.trim();
+            } else {
+              const lastSpaceIndex = line.lastIndexOf(' ');
+              if (lastSpaceIndex !== -1) {
+                teamName = line.slice(0, lastSpaceIndex).trim();
+                logoUrl = line.slice(lastSpaceIndex + 1).trim();
+              } else {
+                teamName = line;
+                logoUrl = '';
+              }
+            }
+
             teamInputs[i].name.value = teamName;
             teamInputs[i].logo.value = logoUrl;
           }
@@ -135,6 +152,8 @@
       const numGroups = parseInt(document.getElementById('numGroups').value);
       const teamsPerGroup = parseInt(document.getElementById('teamsPerGroup').value);
       const bgUrl = document.getElementById('bgUrl').value;
+      const roundName = document.getElementById('roundName').value;
+
       const groups = [];
 
       for (let g = 0; g < numGroups; g++) {
@@ -147,7 +166,13 @@
         groups.push(group);
       }
 
-      socket.send(JSON.stringify({ type: 'start', data: groups, bgUrl }));
+      socket.send(JSON.stringify({ 
+  type: 'start', 
+  data: groups, 
+  bgUrl, 
+  round: roundName 
+}));
+
     }
   </script>
 </body>

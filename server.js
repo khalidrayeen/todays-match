@@ -21,14 +21,16 @@ wss.on('connection', function connection(ws) {
     if (parsed.type === 'start') {
       groupsData = parsed.data;
       backgroundUrl = parsed.bgUrl || '';
-
-      // Broadcast to all connected viewers
+    
+      // Broadcast with round included
       broadcast(JSON.stringify({
         type: 'start',
         data: groupsData,
-        bgUrl: backgroundUrl
+        bgUrl: backgroundUrl,
+        round: parsed.round || '' // <- include round name
       }));
     }
+    
   });
 });
 

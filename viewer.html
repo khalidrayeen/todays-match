@@ -8,7 +8,7 @@
     body {
       margin: 0;
       font-family: sans-serif;
-      color: white;
+      color: rgb(0, 0, 0);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -35,17 +35,19 @@
       text-align: center;
     }
     .team {
-      background: rgba(0, 0, 0, 0.9);
+      background: white;
       border-radius: 16px;
       padding: 60px;
       opacity: 0;
       transform: translateY(20px);
       animation: fadein 0.6s forwards;
+      color: black;
     }
     .team div {
       margin-top: 10px;
       font-size: 20px;
       font-weight: bold;
+      color: black;
     }
     .team img {
       width: 180px;
@@ -54,11 +56,12 @@
     }
     .round {
       background-color: #ffc107;
-      color: black;
+      color: rgb(0, 0, 0);
       padding: 8px 16px;
-      border-radius: 20px;
+      border-radius: 8px;
       margin-top: 20px;
       font-size: 18px;
+      font-weight: bold;
     }
 
     .team:nth-child(1) { animation-delay: 0.1s; }
@@ -98,19 +101,24 @@
 
     socket.onmessage = (event) => {
       const msg = JSON.parse(event.data);
+
       if (msg.type === 'start') {
         groups = msg.data;
         currentGroup = 0;
         currentChunk = 0;
+
         if (msg.bgUrl) {
           document.body.style.backgroundImage = `url('${msg.bgUrl}')`;
         }
+
+        if (msg.round) {
+          round = msg.round;
+          document.getElementById('roundName').textContent = round;
+        }
+
         loopGroups();
       } else if (msg.groupNames) {
         groupNames = msg.groupNames;
-      } else if (msg.round) {
-        round = msg.round;
-        document.getElementById('roundName').textContent = round;
       }
     };
 
@@ -122,7 +130,8 @@
       const viewer = document.getElementById('viewer');
       viewer.innerHTML = '';
 
-      document.getElementById('groupTitle').textContent = groupNames[currentGroup] || `Group ${String.fromCharCode(65 + currentGroup)}`;
+      document.getElementById('groupTitle').textContent =
+        groupNames[currentGroup] || `Group ${String.fromCharCode(65 + currentGroup)}`;
 
       const teamsToShow = chunked[currentChunk];
       const container = document.createElement('div');
