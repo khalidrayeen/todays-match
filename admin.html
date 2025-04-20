@@ -66,7 +66,11 @@
   <button onclick="startStream()">Trigger Animation</button>
 
   <script>
-    const socket = new WebSocket('ws://localhost:6001');
+    const socket = new WebSocket(
+      location.protocol === 'https:' 
+        ? 'wss://' + location.host 
+        : 'ws://' + location.host
+    );
 
     function generateInputs() {
       const form = document.getElementById('form');
@@ -80,7 +84,6 @@
         groupDiv.className = 'group-section';
         groupDiv.innerHTML = `<h3>Group ${String.fromCharCode(65 + g)}</h3>`;
 
-        // Paste area and button
         const pasteArea = document.createElement('textarea');
         pasteArea.placeholder = 'Paste team names + logo URLs (e.g. TeamName [tab/space] https://...)';
         pasteArea.rows = teamsPerGroup + 2;
@@ -116,7 +119,7 @@
         pasteBtn.onclick = () => {
           const lines = pasteArea.value.trim().split('\n');
           for (let i = 0; i < teamsPerGroup && i < lines.length; i++) {
-            const parts = lines[i].trim().split(/\s+/); // split by any space or tab
+            const parts = lines[i].trim().split(/\s+/);
             const teamName = parts[0];
             const logoUrl = parts[1] || '';
             teamInputs[i].name.value = teamName;
