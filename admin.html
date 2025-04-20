@@ -70,7 +70,12 @@
   <button onclick="startStream()">Trigger Animation</button>
 
   <script>
-    const socket = new WebSocket('ws://localhost:6001'); // Update to wss or full URL if hosted
+    const socket = new WebSocket(
+  location.protocol === 'https:' 
+    ? 'wss://' + location.host 
+    : 'ws://' + location.host
+);
+ // Update to wss or full URL if hosted
 
     function generateInputs() {
       const form = document.getElementById('form');
